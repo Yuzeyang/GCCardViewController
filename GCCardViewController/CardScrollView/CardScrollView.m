@@ -169,20 +169,24 @@
 }
 
 - (void)reuseCardWithMoveDirection:(CardMoveDirection)moveDirection {
-    NSInteger formIndex = moveDirection == CardMoveDirectionLeft ? self.currentCardIndex : self.currentCardIndex + 1;
-    if (formIndex > self.totalNumberOfCards - 3 || formIndex < 2) {
-        return;
+    BOOL isLeft = moveDirection == CardMoveDirectionLeft;
+    UIView *card = nil;
+    if (isLeft) {
+        if (self.currentCardIndex > self.totalNumberOfCards - 3 || self.currentCardIndex < 2) {
+            return;
+        }
+        card = [self.cards objectAtIndex:0];
+        card.tag+=4;
+    } else {
+        if (self.currentCardIndex + 1 > self.totalNumberOfCards - 3 ||
+            self.currentCardIndex + 1 < 2) {
+            return;
+        }
+        card = [self.cards objectAtIndex:3];
+        card.tag-=4;
     }
-    BOOL left = moveDirection == CardMoveDirectionLeft;
-    NSInteger index = left ? 0 : 3;
-    UIView *view = [self.cards objectAtIndex:index];
-    [view removeFromSuperview];
-    view.tag = left ? view.tag + 4 : view.tag - 4;
-    
-    CGPoint center = CGPointMake(left ? (self.currentCardIndex + 2.5)*kGCScrollViewWidth : (self.currentCardIndex - 0.5)*kGCScrollViewWidth, self.scrollView.center.y);
-    [view setCenter:center];
-    [self.scrollView addSubview:view];
-    
+    card.center = [self centerForCardWithIndex:card.tag];
+    card = [self.cardDataSource cardViewAtIndex:card.tag reuseView:card];
     [self.cards sortUsingComparator:^NSComparisonResult(UIView *obj1, UIView *obj2) {
         return obj1.tag > obj2.tag;
     }];
