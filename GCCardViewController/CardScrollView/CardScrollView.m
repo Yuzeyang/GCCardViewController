@@ -12,9 +12,6 @@
 #define kGCViewWidth CGRectGetWidth(self.frame)
 #define kGCViewHeight CGRectGetHeight(self.frame)
 #define kGCScrollViewWidth kGCViewWidth*kGCRatio
-//#define kGCCardHeight kGCScrollViewWidth/kGCRatio
-//
-//#define kGCDeleteDistance kGCCardHeight/2
 
 @interface CardScrollView ()<UIScrollViewDelegate,UIGestureRecognizerDelegate>
 
@@ -50,6 +47,7 @@
     self.cards = [NSMutableArray array];
     self.startCardIndex = 0;
     self.currentCardIndex = 0;
+    self.canDeleteCard = YES;
 }
 
 #pragma mark - public methods
@@ -73,12 +71,19 @@
         card.tag = index;
         [self.scrollView addSubview:card];
         [self.cards addObject:card];
+        
+        UILabel *tagLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
+        tagLabel.center = CGPointMake(CGRectGetWidth(card.frame)/2, CGRectGetHeight(card.frame)/2);
+        tagLabel.text = [NSString stringWithFormat:@"%ld",card.tag];
+        [card addSubview:tagLabel];
 
-        UIPanGestureRecognizer *deleteGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(deleteCard:)];
-        deleteGesture.minimumNumberOfTouches = 1;
-        deleteGesture.maximumNumberOfTouches = 1;
-        deleteGesture.delegate = self;
-        [card addGestureRecognizer:deleteGesture];
+        if (self.canDeleteCard) {
+            UIPanGestureRecognizer *deleteGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(deleteCard:)];
+            deleteGesture.minimumNumberOfTouches = 1;
+            deleteGesture.maximumNumberOfTouches = 1;
+            deleteGesture.delegate = self;
+            [card addGestureRecognizer:deleteGesture];
+        }
         
         [self.cardDelegate updateCard:card withProgress:1 direction:CardMoveDirectionNone];
     }
@@ -105,12 +110,12 @@
 - (CGPoint)contentOffsetWithIndex:(NSInteger)index {
     return CGPointMake(kGCScrollViewWidth*index, 0);
 }
-// ?
+
 - (NSInteger)indexMapperTag:(NSInteger)tag {
-    for (NSInteger i = 0; i < self.cards.count; i++) {
-        UIView *card = [self.cards objectAtIndex:i];
+    for (NSInteger index = 0; index < self.cards.count; index++) {
+        UIView *card = [self.cards objectAtIndex:index];
         if (card.tag == tag) {
-            return i;
+            return index;
             break;
         }
     }
@@ -119,45 +124,58 @@
 
 - (void)reloadCardWithIndex:(NSInteger)index {
     [self reuseDeleteCardWithIndex:index];
-    if (index == 0) {
-        [self.scrollView setContentOffset:[self contentOffsetWithIndex:1] animated:YES];
-    } else if (index == 1) {
-        [self.scrollView setContentOffset:[self contentOffsetWithIndex:self.totalNumberOfCards - 2] animated:YES];
-    } else {
-        [self.scrollView setContentOffset:[self contentOffsetWithIndex:self.currentCardIndex + 1] animated:YES];
+    if (index == 3) {
+        self.currentCardIndex-=1;
+//        [self.scrollView setContentOffset:[self contentOffsetWithIndex:self.currentCardIndex] animated:YES];
     }
-    
-    if (index != self.totalNumberOfCards - 1) {
-        NSInteger count = index == 0 ? 4 : 3;
-//        for (NSInteger i = 0; i < count; i++) {
-//            UIView *card = [self.cards objectAtIndex:<#(NSUInteger)#>]
+//    else {
+//        
+//        if (self.totalNumberOfCards > 5) {
+//            [self.cards enumerateObjectsUsingBlock:^(UIView *card, NSUInteger idx, BOOL * _Nonnull stop) {
+//                if (idx >= index) {
+//                    card.tag-=1;
+//                    [UIView animateWithDuration:0.3 animations:^{
+//                        card.center = [self centerForCardWithIndex:card.tag];
+//                    }];
+//                }
+//            }];
+//        } else {
+//            [self.cards enumerateObjectsUsingBlock:^(UIView *card, NSUInteger idx, BOOL * _Nonnull stop) {
+//                if (idx > index) {
+//                    card.tag-=1;
+//                    [UIView animateWithDuration:0.3 animations:^{
+//                        card.center = [self centerForCardWithIndex:card.tag];
+//                    }];
+//                }
+//            }];
 //        }
-        [self.scrollView setContentOffset:[self contentOffsetWithIndex:self.currentCardIndex + 1] animated:YES];
-    }
-    
-    //    [self.scrollView setContentSize:CGSizeMake(kGCScrollViewWidth*(self.totalNumberOfCards-1), CGRectGetHeight(self.frame))];
-    
-    [self.cards removeObjectAtIndex:index];
+//    }
     self.totalNumberOfCards-=1;
+    
+    [UIView animateWithDuration:0.3 animations:^{
+        [self.scrollView setContentSize:CGSizeMake(kGCScrollViewWidth*self.totalNumberOfCards, kGCViewHeight)];
+    }];
+    NSLog(@"totalNumberOfCards %d",self.totalNumberOfCards);
+    // 更新有问题
+//    [self.cardDelegate updateCard:[self.cards objectAtIndex:index] withProgress:1 direction:CardMoveDirectionNone];
 }
 
 - (void)deleteCard:(UIPanGestureRecognizer *)gesture {
     CGPoint translatedPoint = [gesture translationInView:gesture.view];
     CGPoint cardCenter = CGPointMake(gesture.view.center.x, kGCViewHeight/2);
-    CGFloat progress = fabs(translatedPoint.y/(CGRectGetWidth(self.frame)/2));
+    CGFloat progress = fabs(translatedPoint.y/(kGCViewHeight/2));
     if (gesture.state == UIGestureRecognizerStateChanged) {
         cardCenter.y+=translatedPoint.y;
         [gesture.view setCenter:cardCenter];
         gesture.view.layer.opacity = 1 - 0.2*progress;
     } else if (gesture.state == UIGestureRecognizerStateEnded) {
         CGPoint velocity = [gesture velocityInView:gesture.view];
-        if ((translatedPoint.y && progress == 1.0) || (translatedPoint.y < 0 && fabs(velocity.y) > 50)) {
+        if ((translatedPoint.y < 0 && progress >= 1.0) || (translatedPoint.y < 0 && fabs(velocity.y) > 500)) {
             [UIView animateWithDuration:0.3 animations:^{
                 [gesture.view setCenter:CGPointMake(gesture.view.center.x, -kGCViewHeight/2)];
             } completion:^(BOOL finished) {
-                [gesture.view removeFromSuperview];
-                [self reloadCardWithIndex:gesture.view.tag];
-                [self.cardDelegate deleteCardWithIndex:gesture.view.tag];
+                [self reloadCardWithIndex:[self indexMapperTag:gesture.view.tag]];
+//                [self.cardDelegate deleteCardWithIndex:gesture.view.tag];
             }];
         } else {
             [UIView animateWithDuration:0.3 animations:^{
@@ -178,15 +196,15 @@
         card = [self.cards objectAtIndex:0];
         card.tag+=4;
     } else {
-        if (self.currentCardIndex + 1 > self.totalNumberOfCards - 3 ||
-            self.currentCardIndex + 1 < 2) {
+        if (self.currentCardIndex > self.totalNumberOfCards - 4 ||
+            self.currentCardIndex < 1) {
             return;
         }
         card = [self.cards objectAtIndex:3];
         card.tag-=4;
     }
     card.center = [self centerForCardWithIndex:card.tag];
-    card = [self.cardDataSource cardViewAtIndex:card.tag reuseView:card];
+    [self.cardDataSource cardViewAtIndex:card.tag reuseView:card];
     [self.cards sortUsingComparator:^NSComparisonResult(UIView *obj1, UIView *obj2) {
         return obj1.tag > obj2.tag;
     }];
@@ -194,22 +212,53 @@
 
 - (void)reuseDeleteCardWithIndex:(NSInteger)index {
     if (self.totalNumberOfCards <= 4) {
+        [(UIView *)[self.cards objectAtIndex:index] removeFromSuperview];
+        [self resetTagFromIndex:index];
+        [self.cards removeObjectAtIndex:index];
+        [self.cards sortUsingComparator:^NSComparisonResult(UIView *obj1, UIView *obj2) {
+            return obj1.tag > obj2.tag;
+        }];
         return;
     }
     
     UIView *card = [self.cards objectAtIndex:index];
-    CGPoint center;
     if (index == 0) {
-        center = CGPointMake(kGCScrollViewWidth*4.5, self.scrollView.center.y);
-        card.tag = 4;
-    } else if (index == self.totalNumberOfCards - 1) {
-        center = CGPointMake(kGCScrollViewWidth*(index - 3.5), self.scrollView.center.y);
-        card.tag = index - 3;
+        card.tag+=4;
+        card.center = [self centerForCardWithIndex:card.tag];
+        [self resetTagFromIndex:index];
+    } else if (index == 3) {
+        card.tag-=4;
+        card.center = [self centerForCardWithIndex:card.tag];
+        [self resetTagFromIndex:index];
     } else {
-        center = CGPointMake(kGCScrollViewWidth*(index + 3.5), self.scrollView.center.y);
-        card.tag = index + 3;
+        NSInteger lastTag = ((UIView *)[self.cards lastObject]).tag;
+        NSInteger firstTag = ((UIView *)[self.cards firstObject]).tag;
+        if (lastTag == self.totalNumberOfCards - 1) {
+            card.tag = firstTag - 1;
+            card.center = [self centerForCardWithIndex:card.tag];
+            [self resetTagFromIndex:index];
+        } else {
+            card.tag = lastTag + 1;
+            card.center = [self centerForCardWithIndex:card.tag];
+            [self resetTagFromIndex:index - 1];
+        }
     }
-    [card setCenter:center];
+    [self.cardDataSource cardViewAtIndex:card.tag reuseView:card];
+    
+    [self.cards sortUsingComparator:^NSComparisonResult(UIView *obj1, UIView *obj2) {
+        return obj1.tag > obj2.tag;
+    }];
+}
+
+- (void)resetTagFromIndex:(NSInteger)index {
+    [self.cards enumerateObjectsUsingBlock:^(UIView *card, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (idx > index) {
+            card.tag-=1;
+            [UIView animateWithDuration:0.3 animations:^{
+                card.center = [self centerForCardWithIndex:card.tag];
+            }];
+        }
+    }];
 }
 
 #pragma mark - UIGestureRecognizerDelegate
@@ -235,7 +284,7 @@
         [self.cardDelegate updateCard:card withProgress:progress direction:direction];
     }
     
-    if (fabs(diff) >= kGCScrollViewWidth) {
+    if (fabs(diff) >= kGCScrollViewWidth*0.8) {
         self.currentCardIndex = direction == CardMoveDirectionLeft ? self.currentCardIndex + 1 : self.currentCardIndex - 1;
         [self reuseCardWithMoveDirection:direction];
     }

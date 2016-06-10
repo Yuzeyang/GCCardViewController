@@ -32,6 +32,7 @@ typedef NS_ENUM(NSInteger, CardMoveDirection) {
 
 @property (nonatomic, weak) id<CardScrollViewDataSource>cardDataSource;
 @property (nonatomic, weak) id<CardScrollViewDelegate>cardDelegate;
+@property (nonatomic, assign) BOOL canDeleteCard;
 
 - (void)loadCard;
 - (NSArray *)allCards;
