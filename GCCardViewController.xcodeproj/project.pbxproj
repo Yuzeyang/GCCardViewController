@@ -279,12 +279,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer: 泽洋 喻 (YSFB6V68J7)";
+				CODE_SIGN_IDENTITY = "";
 				INFOPLIST_FILE = GCCardViewController/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.qima.card;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "38f8e265-ec8e-4156-a1b1-7f43d1d2d495";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Debug;
 		};
@@ -292,12 +292,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer: 泽洋 喻 (YSFB6V68J7)";
+				CODE_SIGN_IDENTITY = "";
 				INFOPLIST_FILE = GCCardViewController/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.qima.card;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "38f8e265-ec8e-4156-a1b1-7f43d1d2d495";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Release;
 		};
@@ -320,6 +320,7 @@
 				5B4C3F3A1CFDB7F7008FCA95 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

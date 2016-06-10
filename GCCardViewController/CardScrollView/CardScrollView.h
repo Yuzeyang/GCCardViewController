@@ -17,14 +17,15 @@ typedef NS_ENUM(NSInteger, CardMoveDirection) {
 @protocol CardScrollViewDataSource <NSObject>
 
 - (NSInteger)numberOfCards;
-- (UIView *)cardViewAtIndex:(NSInteger)index reuseView:(UIView *)reuseView;
+- (UIView *)cardReuseView:(UIView *)reuseView atIndex:(NSInteger)index;
+@optional
+- (void)deleteCardWithIndex:(NSInteger)index;
 
 @end
 
 @protocol CardScrollViewDelegate <NSObject>
 
 - (void)updateCard:(UIView *)card withProgress:(CGFloat)progress direction:(CardMoveDirection)direction;
-- (void)deleteCardWithIndex:(NSInteger)index;
 
 @end
 

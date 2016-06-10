@@ -66,17 +66,12 @@
     [self.scrollView setContentOffset:[self contentOffsetWithIndex:0]];
     
     for (NSInteger index = 0; index < (self.totalNumberOfCards < 4 ? self.totalNumberOfCards : 4); index++) {
-        UIView *card = [self.cardDataSource cardViewAtIndex:index reuseView:nil];
+        UIView *card = [self.cardDataSource cardReuseView:nil atIndex:index];
         card.center = [self centerForCardWithIndex:index];
         card.tag = index;
         [self.scrollView addSubview:card];
         [self.cards addObject:card];
         
-        UILabel *tagLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
-        tagLabel.center = CGPointMake(CGRectGetWidth(card.frame)/2, CGRectGetHeight(card.frame)/2);
-        tagLabel.text = [NSString stringWithFormat:@"%ld",card.tag];
-        [card addSubview:tagLabel];
-
         if (self.canDeleteCard) {
             UIPanGestureRecognizer *deleteGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(deleteCard:)];
             deleteGesture.minimumNumberOfTouches = 1;
@@ -126,38 +121,15 @@
     [self reuseDeleteCardWithIndex:index];
     if (index == 3) {
         self.currentCardIndex-=1;
-//        [self.scrollView setContentOffset:[self contentOffsetWithIndex:self.currentCardIndex] animated:YES];
     }
-//    else {
-//        
-//        if (self.totalNumberOfCards > 5) {
-//            [self.cards enumerateObjectsUsingBlock:^(UIView *card, NSUInteger idx, BOOL * _Nonnull stop) {
-//                if (idx >= index) {
-//                    card.tag-=1;
-//                    [UIView animateWithDuration:0.3 animations:^{
-//                        card.center = [self centerForCardWithIndex:card.tag];
-//                    }];
-//                }
-//            }];
-//        } else {
-//            [self.cards enumerateObjectsUsingBlock:^(UIView *card, NSUInteger idx, BOOL * _Nonnull stop) {
-//                if (idx > index) {
-//                    card.tag-=1;
-//                    [UIView animateWithDuration:0.3 animations:^{
-//                        card.center = [self centerForCardWithIndex:card.tag];
-//                    }];
-//                }
-//            }];
-//        }
-//    }
     self.totalNumberOfCards-=1;
     
     [UIView animateWithDuration:0.3 animations:^{
         [self.scrollView setContentSize:CGSizeMake(kGCScrollViewWidth*self.totalNumberOfCards, kGCViewHeight)];
+        for (UIView *card in self.cards) {
+            [self.cardDelegate updateCard:card withProgress:1 direction:CardMoveDirectionNone];
+        }
     }];
-    NSLog(@"totalNumberOfCards %d",self.totalNumberOfCards);
-    // 更新有问题
-//    [self.cardDelegate updateCard:[self.cards objectAtIndex:index] withProgress:1 direction:CardMoveDirectionNone];
 }
 
 - (void)deleteCard:(UIPanGestureRecognizer *)gesture {
@@ -175,7 +147,7 @@
                 [gesture.view setCenter:CGPointMake(gesture.view.center.x, -kGCViewHeight/2)];
             } completion:^(BOOL finished) {
                 [self reloadCardWithIndex:[self indexMapperTag:gesture.view.tag]];
-//                [self.cardDelegate deleteCardWithIndex:gesture.view.tag];
+                [self.cardDataSource deleteCardWithIndex:gesture.view.tag];
             }];
         } else {
             [UIView animateWithDuration:0.3 animations:^{
@@ -204,10 +176,8 @@
         card.tag-=4;
     }
     card.center = [self centerForCardWithIndex:card.tag];
-    [self.cardDataSource cardViewAtIndex:card.tag reuseView:card];
-    [self.cards sortUsingComparator:^NSComparisonResult(UIView *obj1, UIView *obj2) {
-        return obj1.tag > obj2.tag;
-    }];
+    [self.cardDataSource cardReuseView:card atIndex:card.tag];
+    [self ascendingSortCards];
 }
 
 - (void)reuseDeleteCardWithIndex:(NSInteger)index {
@@ -215,49 +185,47 @@
         [(UIView *)[self.cards objectAtIndex:index] removeFromSuperview];
         [self resetTagFromIndex:index];
         [self.cards removeObjectAtIndex:index];
-        [self.cards sortUsingComparator:^NSComparisonResult(UIView *obj1, UIView *obj2) {
-            return obj1.tag > obj2.tag;
-        }];
+        [self ascendingSortCards];
         return;
     }
     
     UIView *card = [self.cards objectAtIndex:index];
+    NSInteger fromIndex = index;
     if (index == 0) {
         card.tag+=4;
-        card.center = [self centerForCardWithIndex:card.tag];
-        [self resetTagFromIndex:index];
+        fromIndex = index - 1;
     } else if (index == 3) {
         card.tag-=4;
-        card.center = [self centerForCardWithIndex:card.tag];
-        [self resetTagFromIndex:index];
     } else {
         NSInteger lastTag = ((UIView *)[self.cards lastObject]).tag;
         NSInteger firstTag = ((UIView *)[self.cards firstObject]).tag;
         if (lastTag == self.totalNumberOfCards - 1) {
             card.tag = firstTag - 1;
-            card.center = [self centerForCardWithIndex:card.tag];
-            [self resetTagFromIndex:index];
         } else {
             card.tag = lastTag + 1;
-            card.center = [self centerForCardWithIndex:card.tag];
-            [self resetTagFromIndex:index - 1];
+            fromIndex = index - 1;
         }
     }
-    [self.cardDataSource cardViewAtIndex:card.tag reuseView:card];
-    
-    [self.cards sortUsingComparator:^NSComparisonResult(UIView *obj1, UIView *obj2) {
-        return obj1.tag > obj2.tag;
-    }];
+    card.center = [self centerForCardWithIndex:card.tag];
+    [self ascendingSortCards];
+    [self resetTagFromIndex:fromIndex];
+    [self.cardDataSource cardReuseView:card atIndex:card.tag];
 }
 
 - (void)resetTagFromIndex:(NSInteger)index {
     [self.cards enumerateObjectsUsingBlock:^(UIView *card, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (idx > index) {
+        if ((NSInteger)idx > index) {
             card.tag-=1;
             [UIView animateWithDuration:0.3 animations:^{
                 card.center = [self centerForCardWithIndex:card.tag];
             }];
         }
+    }];
+}
+
+- (void)ascendingSortCards {
+    [self.cards sortUsingComparator:^NSComparisonResult(UIView *obj1, UIView *obj2) {
+        return obj1.tag > obj2.tag;
     }];
 }
 

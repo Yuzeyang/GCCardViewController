@@ -66,6 +66,9 @@
             CGFloat scale = 1 - 0.1 * progress;
             card.layer.transform = CATransform3DMakeScale(scale, scale, 1.0);
             card.layer.opacity = 1 - 0.2*progress;
+        } else {
+            card.layer.transform = CATransform3DIdentity;
+            card.layer.opacity = 1;
         }
     } else {
         NSInteger transCardTag = direction == CardMoveDirectionLeft ? [self.cardScrollView currentCard] + 1 : [self.cardScrollView currentCard] - 1;
@@ -79,16 +82,12 @@
      }
 }
 
-- (void)deleteCardWithIndex:(NSInteger)index {
-    [self.cards removeObjectAtIndex:index];
-}
-
 #pragma mark - CardScrollViewDataSource
 - (NSInteger)numberOfCards {
     return self.cards.count;
 }
 
-- (UIView *)cardViewAtIndex:(NSInteger)index reuseView:(UIView *)reuseView {
+- (UIView *)cardReuseView:(UIView *)reuseView atIndex:(NSInteger)index {
     if (reuseView) {
         // you can set new style
         return reuseView;
@@ -100,6 +99,10 @@
     card.layer.masksToBounds = YES;
     
     return card;
+}
+
+- (void)deleteCardWithIndex:(NSInteger)index {
+    [self.cards removeObjectAtIndex:index];
 }
 
 @end
