@@ -4,7 +4,7 @@
 
 This is animation is imitate iOS7 background preview animation, if you have more than 4 cards,it will reues card,and it can delete card
 
-This is the gif
+## Gif
 
 ![](https://github.com/Yuzeyang/GCCardViewController/raw/master/GCCardViewController.gif)
 
