@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is animation is imitate iOS7 background preview animation, if you have more than 4 cards,it will reues card,and it can delete card
+This is animation is imitate iOS7 task switcher animation, if you have more than 4 cards,it will reues card,and it can delete card
 
 ## Gif
 
