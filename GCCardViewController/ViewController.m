@@ -49,8 +49,8 @@
     // Do any additional setup after loading the view, typically from a nib.
 }
 
-- (void)viewDidLayoutSubviews {
-    [super viewDidLayoutSubviews];
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
     [self.cardScrollView loadCard];
 }
 
