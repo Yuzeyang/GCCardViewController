@@ -43,3 +43,6 @@ self.cardScrollView.cardDataSource = self;
 - (void)deleteCardWithIndex:(NSInteger)index;
 ```
 
+## Related articles
+
+[模仿iOS7 task switcher的卡片动画](http://zeeyang.com/2016/06/11/iOS-card-animation/)
