@@ -99,7 +99,7 @@
 }
 
 - (CGPoint)centerForCardWithIndex:(NSInteger)index {
-    return CGPointMake(kGCScrollViewWidth*(index + 0.5), self.scrollView.center.y);
+    return CGPointMake(kGCScrollViewWidth*(index + 0.5), CGRectGetHeight(self.scrollView.frame)/2);
 }
 
 - (CGPoint)contentOffsetWithIndex:(NSInteger)index {
